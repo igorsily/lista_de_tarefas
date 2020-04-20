@@ -43,6 +43,32 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<Null> _refresh() async {
+    await Future.delayed(
+      Duration(seconds: 1),
+    );
+
+    _todoList.sort((a, b) {
+      if (a['check'] && !b['check']) {
+        return 1;
+      }
+      if (!a['check'] && b['check']) {
+        return -1;
+      }
+      return 0;
+    });
+
+    final newTodoList = _todoList;
+
+    setState(() {
+      _todoList = newTodoList;
+    });
+
+    _saveData();
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,77 +134,80 @@ class _HomeState extends State<Home> {
             height: 10,
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _todoList.length,
-              itemBuilder: (context, index) {
-                return Dismissible(
-                  key: Key(
-                    DateTime.now().millisecond.toString(),
-                  ),
-                  onDismissed: (_) {
-                    _lastRemoved = _todoList[index];
-                    _lastRemovedPosition = index;
-                    setState(() {
-                      _todoList.removeAt(index);
-                    });
-
-                    _saveData();
-
-                    final snackbar = SnackBar(
-                      content:
-                          Text("Tarefa ${_lastRemoved['title']} removida!"),
-                      action: SnackBarAction(
-                        label: "Desfazer",
-                        onPressed: () {
-                          setState(() {
-                            _todoList.insert(
-                                _lastRemovedPosition, _lastRemoved);
-                          });
-                          _saveData();
-                        },
-                      ),
-                      duration: Duration(
-                        seconds: 3,
-                      ),
-                    );
-                    Scaffold.of(context).showSnackBar(snackbar);
-                  },
-                  background: Container(
-                    color: Colors.red,
-                    child: Align(
-                      alignment: Alignment(-0.9, 0),
-                      child: Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 30,
-                      ),
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView.builder(
+                itemCount: _todoList.length,
+                itemBuilder: (context, index) {
+                  return Dismissible(
+                    key: Key(
+                      DateTime.now().millisecond.toString(),
                     ),
-                  ),
-                  direction: DismissDirection.startToEnd,
-                  child: CheckboxListTile(
-                    title: Text(
-                      _todoList[index]["title"],
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                      ),
-                    ),
-                    onChanged: (value) {
+                    onDismissed: (_) {
+                      _lastRemoved = _todoList[index];
+                      _lastRemovedPosition = index;
                       setState(() {
-                        _todoList[index]["check"] = value;
+                        _todoList.removeAt(index);
                       });
+
+                      _saveData();
+
+                      final snackbar = SnackBar(
+                        content:
+                            Text("Tarefa ${_lastRemoved['title']} removida!"),
+                        action: SnackBarAction(
+                          label: "Desfazer",
+                          onPressed: () {
+                            setState(() {
+                              _todoList.insert(
+                                  _lastRemovedPosition, _lastRemoved);
+                            });
+                            _saveData();
+                          },
+                        ),
+                        duration: Duration(
+                          seconds: 3,
+                        ),
+                      );
+                      Scaffold.of(context).showSnackBar(snackbar);
                     },
-                    activeColor: Color(0xff1a237e),
-                    checkColor: Colors.white,
-                    value: _todoList[index]["check"],
-                    secondary: CircleAvatar(
-                      child: Icon(
-                        _todoList[index]["check"] ? Icons.check : Icons.error,
+                    background: Container(
+                      color: Colors.red,
+                      child: Align(
+                        alignment: Alignment(-0.9, 0),
+                        child: Icon(
+                          Icons.delete_outline,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                    direction: DismissDirection.startToEnd,
+                    child: CheckboxListTile(
+                      title: Text(
+                        _todoList[index]["title"],
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _todoList[index]["check"] = value;
+                        });
+                      },
+                      activeColor: Color(0xff1a237e),
+                      checkColor: Colors.white,
+                      value: _todoList[index]["check"],
+                      secondary: CircleAvatar(
+                        child: Icon(
+                          _todoList[index]["check"] ? Icons.check : Icons.error,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
