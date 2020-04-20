@@ -169,6 +169,7 @@ class _HomeState extends State<Home> {
                           seconds: 3,
                         ),
                       );
+                      Scaffold.of(context).removeCurrentSnackBar();
                       Scaffold.of(context).showSnackBar(snackbar);
                     },
                     background: Container(
